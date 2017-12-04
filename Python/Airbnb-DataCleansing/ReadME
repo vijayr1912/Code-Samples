@@ -1,1 +1,6 @@
-This Python Jupyter Notebook is used for cleaning, normalizing the train data set that is to be used for predicitve modeling of Airbnb overnight pricining train data set.
+This Python Jupyter Notebook is used for cleaning, normalizing the train data set that is to be used for 
+predicitve modeling of Airbnb overnight pricining train data set.
+
+Input csv file is not committed due to the size restrictions.
+
+Output csv file is listings_sydney_2017_cleaned.csv
