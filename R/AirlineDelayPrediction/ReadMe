@@ -1,0 +1,5 @@
+R Shiny App for prediction if in-flight time can make up for airline departure delays.
+
+Requeires JAVA and Apache Spark to be installed on your local system.
+
+Support build only for local server.
