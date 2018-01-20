@@ -1,0 +1,9 @@
+Producer and Consumer examples in Apache Kafka 1.0.0, build in Hadoop ecosystem 2.6.7. Example done in JAVA, can be replicated to Scala as
+well.
+
+Schema serialization and de-serialization done using Apache Avro 1.8.2.
+
+The producer and consumer folder have identical files.
+1. Producer/Consumers.java
+2. .sbt file for MAven repository build
+3. .avsc file for AVRO schema
