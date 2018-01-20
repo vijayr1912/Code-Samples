@@ -1,0 +1,6 @@
+A simple webcrawling library built using Scala and Akka. Allows users to easily perform actions for each page found by a crawler.
+
+Building
+Requires SBT to build. As long as you have it installed, you can run the following to package the JARs and install them to your local Maven repo:
+
+sbt clean publish
