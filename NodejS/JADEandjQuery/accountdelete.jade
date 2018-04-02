@@ -1,0 +1,98 @@
+extends layouts/logged-in
+
+append head
+  title User Profile - Emberpulse
+
+block content
+  include components/navbar
+  +navbar("/accountdelete" + user.username)
+
+  include components/header
+
+  article#accountdelete-pane.form-pane
+    include components/flash-messages
+
+    form.form-horizontal.form-help(method='post', role='form')
+      legend #{ user.username }'s Profile
+
+      div.form-group
+        label(for='delete-description') Delete account
+        p#delete-description.form-control-static.input-full-width If you delete your account, information about the account and all the devices associated will be permanently removed. There is no going back. Please be certain.
+        p.form-control-static.input-full-width We suggest that you manually pull off the power plug from your emberpulse after successful account delete.
+      div.form-group
+        label(for='delete-password') Password
+        input#delete-password.form-control.input-full-width.ignore(type='password', name='delete-password', autocomplete='off',autocomplete=false)
+        if error['delete-password']
+          label.error(for='delete-password') #{ error['delete-password'].msg }
+      div.form-group
+        label.input-full-width
+          input#confirm.input-full-width(type='checkbox', name='confirm', checked=false)
+          | I confirm I want to delete the account and the associated devices
+        if error['confirm']
+          label.error(for='confirm') #{ error['confirm'].msg }
+
+      div.form-group
+        div.two-buttons
+          a.btn.btn-default(href='/') Cancel
+          input(type='hidden', name='_csrf', value='#{csrftoken}')
+          button.btn.btn-primary(class='btn-danger',type='submit') Delete
+
+      //
+        PARAMS
+        !{ JSON.stringify(params, JSONreplacer) }
+
+        ERROR
+        !{ JSON.stringify(error, JSONreplacer) }
+
+  include components/footer
+
+append scripts
+  script.
+    (function() {
+        "use strict";
+
+        $.validator.addMethod('doubleChecked', function(value, element) {
+            var jele = $(element);
+            if (jele.hasClass('ignore')) {
+                return true;
+            } else {
+                return jele.is(':checked');
+            }
+        }, 'You must double confirm the request');
+
+        // Set up form validation
+        var validator = $('#accountdelete-pane form').validate({
+            ignore: '.ignore',
+            rules: {
+                'delete-password': {
+                    required: true
+                },
+                'confirm': {
+                    doubleChecked: true
+                }
+            },
+            errorPlacement: function(error, element) {
+                if (element.attr('type') === 'radio') {
+                    element.parent().parent().append(error);
+                } else if ($(element).prop('id') === 'confirm') {
+                    element.parent().append(error);
+                } else {
+                    error.insertAfter(element);
+                }
+            },
+
+            showErrors: function(errorMap, errorList) {
+                if (errorList.length === 0) {
+                    $('#steps li.active .error-badge').remove();
+                }
+                errorList.forEach(function(error) {
+                    var errTab = $(error.element).parents('.tab-pane');
+                    var tabLi = $('#steps li > a[href="#' + errTab.attr('id') + '"]').parent();
+                    if (errTab.length === 1) {
+                        tabLi.append($('<span>!</span>').attr('class', 'error-badge'));
+                    }
+                });
+                this.defaultShowErrors();
+            }
+        });
+    }());

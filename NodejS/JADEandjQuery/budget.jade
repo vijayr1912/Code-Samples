@@ -1,0 +1,129 @@
+extends layouts/logged-in
+
+append head
+  title Bill Forecast - Emberpulse
+
+block content
+  include components/navbar
+  +navbar("/budget")
+
+  include components/header
+
+  article#budget-pane
+    include components/flash-messages
+    include components/billing-dates
+
+    - var budget_set = (budget.total !== undefined);
+
+    if !tariff
+      div.row
+        div#notice.widget
+          div.widget-content
+            legend Enter Your #{terms.electricity_plan.tc} Details
+            p For Emberpulse to help you understand and forecast your electricity bill, it needs to know about your #{terms.electricity_plan.t}.
+            p Your #{terms.electricity_plan.t} is the set of charges you pay for your electricity and can be found on one of your recent electricity bills.
+            a.btn.btn-primary(href='/tariff/complex/create') Set #{terms.electricity_plan.tc}
+    else
+      if !budget_set
+        div.row
+          div#notice.widget
+            div.widget-content
+              legend You do not currently have a budget
+              p Setting a budget allows you to track your spending against a goal that you set for yourself. Would you like to set one now?
+              a.btn.btn-primary(href='/budget/update') Set Budget
+      div.row
+        div#budget-header
+          legend.date-range
+            +make_billing_dates(budget.billing_period_start, budget.billing_period_end, tz)
+            if budget_set
+              a.btn.btn-default.pull-right(href="/budget/update")
+                i.fa.fa-gear
+                |  Change Budget
+
+      div.row
+        div#budget-graph.widget
+          div.widget-content
+            legend Bill Forecast
+            div.graph
+              div.graph-content
+                svg
+            //- new Date(undefined) is invalid
+            - var bp_start = new Date((budget || {}).billing_period_start);
+            - var meter_paired = new Date(((hpc || {}).smart_meter || {}).first_paired);
+            //- meter_paired can be invalid, which false the '>=' compare result
+            if bp_start.toString() !== 'Invalid Date' && !(bp_start >= meter_paired)
+              div#disclaimer-partial.disclaimer
+                p *Attention. This bill forecast is incomplete.
+                  | It covers a partial billing period starting from the date your
+                  | Emberpulse first connected to your meter.
+
+      div.row
+        div#budget-readout
+          div.quad-readout.widget
+            div.widget-content(class=budget_set ? '' : 'no-budget')
+              legend This Period
+
+              if budget_set
+                div.widget#budget-description
+                  legend Budget
+                  div.readout.good
+                    span.units $
+                    span.decimal= decimal(budget.total, 0)
+
+              div.widget
+                legend Cost To Date
+                div.readout(class=css_class.cost_to_date)
+                  span.units $
+                  span.decimal= decimal(budget.cost_to_date, 0)
+
+              div.widget
+                legend Forecast Total
+                div.readout(class=css_class.forecast)
+                  span.units $
+                  span.decimal= decimal(budget.estimated_total_cost, 0)
+
+              if budget_set
+                div.widget
+                  legend Estimated !{ css_class.forecast === 'good' ? 'Saving' : 'Excess' }
+                  div.readout(class=css_class.forecast)
+                    - var difference_number = Math.abs(budget.total - budget.estimated_total_cost)
+                    span.units $
+                    span.decimal= decimal(difference_number, 0)
+
+      div.row
+        div#budget-alerts
+          div.widget
+            div.widget-content
+              legend Alerts
+              if budget.alerts && budget.alerts.list && budget.alerts.list.length > 0
+                each alt in budget.alerts.list
+                  div.progress
+                    div.progress-bar(role="progressbar",
+                                     aria-valuenow=alt.percentage,
+                                     aria-valuemin="0",
+                                     aria-valuemax="#{ config.max_alert_percentage }",
+                                     class='#{ alt.sent ? "sent" : "notsent" }',
+                                     style="width: #{ alt.percentage }%;")
+                      | $#{ Number(alt.percentage * budget.total / 100).toFixed(0).toString() } | #{ alt.percentage }%
+              else
+                span There are no alerts.
+              if user.registration_address.country === 'AU'
+                div.tax-note
+                  span All dollar values on this page are inclusive of #{__('tax')}.
+
+  include components/footer
+
+include components/budget-scripts
+append scripts
+  script.
+    (function() {
+        'use strict';
+
+        // The current budget
+        window.ipm.budget = !{ JSON.stringify(budget, JSONreplacer) };
+        window.ipm.getBudgetMargins = function() {
+            return { top: 40, right: 80, bottom: 20, left: 70 };
+        };
+    }());
+
+  +budget_scripts()
